@@ -16,4 +16,4 @@ To do this project, you need:
 6. Turn ON the Power Meter.
 
 Or simply follow this picture
-![Block Diagram](images/diagram.jpg)
+![Block Diagram](images/Wiring PZEM-016.jpg)
