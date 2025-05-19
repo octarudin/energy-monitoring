@@ -16,5 +16,5 @@ To do this project, you need:
 6. Turn ON the Power Meter.
 
 Or simply follow this picture  
-<img src="images/Wiring PZEM-016.jpg" alt="How to Wire" width="400">
+<img src="images/Wiring PZEM-016.jpg" alt="How to Wire" width="500">
 
