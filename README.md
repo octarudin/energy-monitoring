@@ -1,7 +1,7 @@
 # Energy Monitoring
 Single Phase Electrical Energy Monitoring with ESP32 or simply Energy Monitoring is a mini-project that intended to my portfolio. Also, to measure my skill while using ESP32.
-In this project, FreeRTOS is used to get All Power Meter Data. Still available to add more device/sensor with RS-485 Communication. The data gathered in Local Server by MQTT Explorer. 
-
+In this project, FreeRTOS is used to get All Power Meter Data. Still available to add more device/sensor with RS-485 Communication. The data monitored in Local Server by MQTT Explorer. 
+The status of monitoring is appended by timestamp so that the users can know when the controller starts to Online/Offline. 
 
 To do this project, you need:
 - ESP32 Microcontroller, 1 unit
