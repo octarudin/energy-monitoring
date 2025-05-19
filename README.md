@@ -9,6 +9,7 @@ To do this project, you need:
 - PZEM Power Meter, 1 unit
 - AC Load, 1 unit
 - TTL-RS485 Module, 1 unit
+- Twisted Pair Cable, 1 unit
 - Female-Female 4pin Dupont/Jumper Cable, 1 unit
 
 # How to Wire
