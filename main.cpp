@@ -1,3 +1,12 @@
+/*
+** Use PlatformIO and put these libraries into your platform.ini file,
+** lib_deps = 
+**	  adafruit/Adafruit NeoPixel@^1.13.0
+**	  knolleary/PubSubClient@^2.8
+**	  arduino-libraries/NTPClient@^3.2.1
+**	  arduino-libraries/ArduinoModbus@^1.0.9
+**/
+
 #include <Arduino.h>
 #include <WiFi.h>
 #include <Adafruit_NeoPixel.h>
