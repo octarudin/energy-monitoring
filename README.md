@@ -1,5 +1,8 @@
 # Energy Monitoring
 Single Phase Electrical Energy Monitoring with ESP32 or simply Energy Monitoring is a mini-project that intended to my portfolio. Also, to measure my skill while using ESP32.
+In this project, FreeRTOS is used to get All Power Meter Data. Still available to add more device/sensor with RS-485 Communication. The data gathered in Local Server by MQTT Explorer. 
+
+
 To do this project, you need:
 - ESP32 Microcontroller, 1 unit
 - PZEM Power Meter, 1 unit
@@ -15,6 +18,7 @@ To do this project, you need:
 5. Connect the Power Meter with your Electrical Equipments.
 6. Turn ON the Power Meter.
 
-Or simply follow this picture  
+Or simply follow this picture.  
 <img src="images/Wiring PZEM-016.jpg" alt="How to Wire" width="500">
 
+Enjoy.
