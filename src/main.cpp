@@ -1,8 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <Adafruit_NeoPixel.h>
-// #include <FreeRTOS.h> // included automatically
-// #include <task.h> // // included automatically
 #include <PubSubClient.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
@@ -28,7 +26,6 @@
 const char *LWTTopic  = "esp32/status";
 const char *DeviceControlTopic  = "esp32/led";
 const char *PZEMTopic  = "esp32/pzem";
-const char *XYMDTopic  = "esp32/xymd";
 const int  maxCycle = 5;
 
 WiFiUDP ntpUDP;
@@ -40,7 +37,6 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", 7 * 3600, 60000); // +7 jam untuk W
 TaskHandle_t mqttTaskHandle;
 TaskHandle_t blinkRedLEDHandle;
 TaskHandle_t getPZEMTask;
-TaskHandle_t getXYMDTask;
 String header;
 
 uint8_t wait, waitSTA, retry;
@@ -52,16 +48,9 @@ float voltage, current, power;
 float frequency, powerfactor;
 int energy;
 
-// XY-MD02
-float temperature, humidity;
-
-// file yang dibutuhkan:
-// - esp32s3 basic mqtt pubsub
-// - esp32s3 modbus 4     }
-// - esp32s3 webserver 2  } esp32s3 modbus webserver
-
 void getPZEM (void *pvParam);
-void getXYMD (void *pvParam);
+
+
 
 void showRedLED(bool status) {
   if (status) {
@@ -268,10 +257,11 @@ void setup() {
     </head>
     <body>
       <div class="container">
-        <h2 class="text-center mb-4">Monitoring PZEM-016 & XY-MD02</h2>
+        <h2 class="text-center mb-4">Energy Monitoring with PZEM-016</h2>
         <div class="row g-4">
           <div class="col-md-6">
             <div class="card border-primary shadow">
+    
               <div class="card-header bg-primary text-white text-center fw-bold">
                 PZEM-016 (Power Meter)
               </div>
@@ -285,22 +275,6 @@ void setup() {
     html += "<p><strong>Energy:</strong> " + String(energy) + " Wh</p>";
     html += "<p><strong>Frequency:</strong> " + String(frequency, 1) + " Hz</p>";
     html += "<p><strong>Power Factor:</strong> " + String(powerfactor, 2) + "</p>";
-
-    html += R"rawliteral(
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="card border-success shadow">
-              <div class="card-header bg-success text-white text-center fw-bold">
-                XY-MD02 (Temperature & Humidity)
-              </div>
-              <div class="card-body">
-    )rawliteral";
-
-    // // Tambahkan data XY-MD02
-    // html += "<p><strong>Temperature:</strong> " + String(temperature, 1) + " &deg;C</p>";
-    // html += "<p><strong>Humidity:</strong> " + String(humidity, 1) + " %</p>";
 
     html += R"rawliteral(
               </div>
@@ -321,13 +295,6 @@ void setup() {
   // RTOS / Multi-Threading Task
   xTaskCreatePinnedToCore(mqttTask, "mqttTask", 4096, NULL, 1, &mqttTaskHandle, 0);
   xTaskCreatePinnedToCore(getPZEM, "getPZEM", 4096, NULL, 1, &getPZEMTask, 1);
-  // xTaskCreatePinnedToCore(getXYMD, "getXYMD", 4096, NULL, 1, &getXYMDTask, 1);
-  
-  // already called in reconnectMQTT()
-  // xTaskCreatePinnedToCore(blinkRedLED, "mqttLost", 2048, NULL, 1, &blinkRedLEDHandle, 1);
-
-  delay(100); // Jeda sebelum mulai
-  xTaskNotifyGive(getPZEMTask);
 }
 
 void loop() {
@@ -337,8 +304,6 @@ void loop() {
 
 void getPZEM (void *pvParam) {
   while (true) {
-    // Tunggu notifikasi dari task sebelumnya (atau awal mula)
-    // ulTaskNotifyTake(pdTRUE, portMAX_DELAY);  // Reset notifikasi setelah diterima
     if (!ModbusRTUClient.requestFrom(1, INPUT_REGISTERS, 0x00, 10)) {
       Serial.print("failed to read registers! ");
       Serial.println(ModbusRTUClient.lastError());
@@ -359,11 +324,7 @@ void getPZEM (void *pvParam) {
       energy  = (((rawEnergyH << 8) << 8) + rawEnergyL); // it's uint32_t data type
       frequency = rawFrequency / 10.0;
       powerfactor = rawPowerFactor / 100.0;
-      // char payload[128];
-      // snprintf(payload, sizeof(payload),
-      //        "{\"voltage\":%.1f,\"current\":%.3f,\"power\":%.1f,\"energy\":%d,\"frequency\":%.1f,\"pf\":%.2f}",
-      //        voltage, current, power, energy, frequency, powerfactor);
-
+      
       // client.publish(PZEMTopic, payload, true);
       client.publish("esp32/pzem/voltage", (String(voltage,1) + " V").c_str(), true);
       client.publish("esp32/pzem/current", (String(current,3) + " A").c_str(), true);
@@ -382,33 +343,6 @@ void getPZEM (void *pvParam) {
       // Serial.println();
     }
     vTaskDelay(pdMS_TO_TICKS(1000));
-    // xTaskNotifyGive(getXYMDTask);
   } // end while()
 }
 
-void getXYMD (void *pvParam) {
-  while(true) {
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);  // Tunggu notifikasi
-    if (!ModbusRTUClient.requestFrom(2, INPUT_REGISTERS, 0x01, 2)) {
-      Serial.print("failed to read registers! ");
-      Serial.println(ModbusRTUClient.lastError());
-    } else {
-      short rawtemperature = ModbusRTUClient.read();
-      short rawhumidity = ModbusRTUClient.read();
-      temperature = rawtemperature / 10.0;
-      humidity = rawhumidity / 10.0;
-      // char payload[64];
-      // snprintf(payload, sizeof(payload),
-      //         "{\"temperature\":%.1f,\"humidity\":%.1f}", temperature, humidity);
-
-      // client.publish(XYMDTopic, payload, true);
-      client.publish("esp32/xymd/temperature", (String(temperature,1) + " C").c_str(), true);
-      client.publish("esp32/xymd/humidity", (String(humidity,1) + " %").c_str(), true);
-
-      // Serial.println("Temp: " + String(temperature) + " C");
-      // Serial.println("Humd: " + String(humidity) + " % RH");
-    }
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    xTaskNotifyGive(getPZEMTask);
-  } // end while()
-}
